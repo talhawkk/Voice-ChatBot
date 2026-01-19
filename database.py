@@ -34,20 +34,21 @@ def get_connection():
             )
         return conn
     except psycopg2.Error as e:
-        print(f"⚠️  Database connection error: {e}")
+        print(f"[WARNING] Database connection error: {e}")
         return None
 
 def init_db():
     """Initialize database tables if they don't exist."""
     conn = get_connection()
     if not conn:
-        print("⚠️  Could not connect to database. Database operations will be skipped.")
+        print("[WARNING] Could not connect to database. Database operations will be skipped.")
         return False
     
     try:
         cur = conn.cursor()
         
         # Create messages table
+        # Note: If table exists with old schema, we'll need to alter it
         cur.execute("""
             CREATE TABLE IF NOT EXISTS messages (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -60,6 +61,18 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        
+        # Alter table if message_id column is too small (fix for existing databases)
+        try:
+            cur.execute("""
+                ALTER TABLE messages 
+                ALTER COLUMN message_id TYPE VARCHAR(255)
+            """)
+            conn.commit()
+        except psycopg2.Error:
+            # Column might already be correct size or doesn't exist yet
+            conn.rollback()
+            pass
         
         # Create indexes for better query performance
         cur.execute("""
@@ -75,11 +88,11 @@ def init_db():
         conn.commit()
         cur.close()
         conn.close()
-        print("✅ Database initialized successfully")
+        print("[OK] Database initialized successfully")
         return True
         
     except psycopg2.Error as e:
-        print(f"⚠️  Database initialization error: {e}")
+        print(f"[WARNING] Database initialization error: {e}")
         if conn:
             conn.rollback()
             conn.close()
@@ -130,7 +143,7 @@ def save_message(
         return True
         
     except psycopg2.Error as e:
-        print(f"⚠️  Error saving message to database: {e}")
+        print(f"[WARNING] Error saving message to database: {e}")
         if conn:
             conn.rollback()
             conn.close()
@@ -183,7 +196,7 @@ def get_conversation_history(session_id: str, limit: int = 10) -> List[Dict]:
         return messages
         
     except psycopg2.Error as e:
-        print(f"⚠️  Error retrieving conversation history: {e}")
+        print(f"[WARNING] Error retrieving conversation history: {e}")
         if conn:
             conn.close()
         return []
@@ -228,7 +241,7 @@ def get_message_by_id(message_id: str) -> Optional[Dict]:
         return None
         
     except psycopg2.Error as e:
-        print(f"⚠️  Error retrieving message: {e}")
+        print(f"[WARNING] Error retrieving message: {e}")
         if conn:
             conn.close()
         return None

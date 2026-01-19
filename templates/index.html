@@ -55,6 +55,7 @@
             display: flex;
             align-items: center;
             gap: 12px;
+            position: relative;
         }
         
         .header-icon {
@@ -70,6 +71,77 @@
         
         .header-title {
             flex: 1;
+        }
+        
+        .call-button {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .call-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .call-button.active {
+            background: #ef4444;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+        }
+        
+        .call-status {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: rgba(239, 68, 68, 0.95);
+            color: white;
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .call-status.active {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .container.in-call .input-area {
+            opacity: 0.3;
+            pointer-events: none;
         }
         
         .header h1 {
@@ -169,6 +241,46 @@
             text-align: left;
         }
         
+        /* System messages (call started/ended) - centered */
+        .system-message {
+            display: flex;
+            justify-content: center;
+            margin: 16px 0;
+        }
+        
+        .system-message-text {
+            background: rgba(255, 255, 255, 0.1);
+            color: #a0a0a0;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* Call indicator icon for voice call messages */
+        .call-indicator {
+            position: absolute;
+            bottom: 4px;
+            right: 8px;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+        
+        .message.user .call-indicator {
+            right: auto;
+            left: 8px;
+        }
+        
+        /* Adjust message-time position when call indicator present */
+        .call-message .message-time {
+            margin-right: 20px;
+        }
+        
+        .message.user.call-message .message-time {
+            margin-right: 0;
+            margin-left: 20px;
+        }
+        
         .voice-message {
             padding: 12px 16px;
             min-width: 200px;
@@ -240,8 +352,35 @@
             transform: scale(1.05);
         }
         
+        .play-pause-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .play-pause-btn.error {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+        
+        .play-pause-btn.error:hover {
+            background: rgba(239, 68, 68, 0.5);
+        }
+        
         .message.assistant .play-pause-btn {
             background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .message.assistant .play-pause-btn.error {
+            background: rgba(239, 68, 68, 0.25);
+        }
+        
+        .message.error .message-bubble {
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        
+        .duration.error {
+            color: #ef4444;
+            font-weight: 500;
         }
         
         .waveform-visualizer {
@@ -644,6 +783,10 @@
                 <h1>Jarvis Voice Assistant</h1>
                 <p>Chat with text or use voice recording</p>
             </div>
+            <button id="call-btn" class="call-button" title="Start Voice Call">📞</button>
+            <div id="call-status" class="call-status">
+                <span id="call-status-text">Voice call active - Speak naturally...</span>
+            </div>
         </div>
         
         <div class="chat-container" id="chat-container">
@@ -665,6 +808,8 @@
         </div>
     </div>
 
+    <!-- Socket.IO Client Library -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="/static/recorder.js"></script>
 </body>
 </html>

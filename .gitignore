@@ -19,3 +19,9 @@ __pycache__
 .pytest_cache
 /audio
 audio/
+
+# Google Cloud credentials (NEVER commit!)
+*.json
+google-tts-credentials.json
+*-credentials.json
+credentials.json

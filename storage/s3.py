@@ -19,6 +19,7 @@ AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 # Initialize S3 client
 _s3_client = None
 
+
 def get_s3_client():
     """Get or create S3 client."""
     global _s3_client
@@ -40,6 +41,24 @@ def get_s3_client():
             return None
     
     return _s3_client
+
+
+def upload_to_s3_async(file_path: Path, bucket: Optional[str] = None, key: Optional[str] = None) -> None:
+    """
+    Upload file to S3 in background thread (non-blocking).
+    Use this for latency optimization - don't wait for upload to complete.
+    """
+    import threading
+    
+    def _upload_thread():
+        try:
+            upload_to_s3(file_path, bucket, key)
+        except Exception as e:
+            print(f"⚠️  Background S3 upload error: {e}")
+    
+    thread = threading.Thread(target=_upload_thread, daemon=True)
+    thread.start()
+
 
 def upload_to_s3(file_path: Path, bucket: Optional[str] = None, key: Optional[str] = None) -> Optional[str]:
     """
@@ -101,6 +120,7 @@ def upload_to_s3(file_path: Path, bucket: Optional[str] = None, key: Optional[st
         print(f"⚠️  Unexpected error uploading to S3: {e}")
         return None
 
+
 def get_s3_url(bucket: Optional[str] = None, key: str = "") -> str:
     """
     Generate S3 URL for a given bucket and key.
@@ -116,6 +136,7 @@ def get_s3_url(bucket: Optional[str] = None, key: str = "") -> str:
         bucket = AWS_S3_BUCKET or "your-bucket"
     
     return f"https://{bucket}.s3.{AWS_REGION}.amazonaws.com/{key}"
+
 
 def download_from_s3(key: str, local_path: Path, bucket: Optional[str] = None) -> bool:
     """
@@ -154,6 +175,7 @@ def download_from_s3(key: str, local_path: Path, bucket: Optional[str] = None) -
         print(f"⚠️  Unexpected error downloading from S3: {e}")
         return False
 
+
 def delete_from_s3(key: str, bucket: Optional[str] = None) -> bool:
     """
     Delete a file from S3 (optional cleanup function).
@@ -183,6 +205,7 @@ def delete_from_s3(key: str, bucket: Optional[str] = None) -> bool:
         print(f"⚠️  S3 delete error: {e}")
         return False
 
+
 def _get_content_type(file_path: Path) -> str:
     """Get content type based on file extension."""
     extension = file_path.suffix.lower()
@@ -194,6 +217,7 @@ def _get_content_type(file_path: Path) -> str:
         '.ogg': 'audio/ogg'
     }
     return content_types.get(extension, 'application/octet-stream')
+
 
 def is_s3_configured() -> bool:
     """Check if S3 is properly configured."""
