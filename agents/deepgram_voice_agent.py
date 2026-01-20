@@ -10,7 +10,7 @@ import io
 from typing import Optional, Callable, Dict, Any
 from dotenv import load_dotenv
 
-# --- NEW IMPORTS: Local Tools ---
+# --- Local Tools ---
 from llm.tools import APPOINTMENT_TOOLS, check_availability_tool, book_appointment_tool
 
 load_dotenv()
@@ -47,7 +47,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 VOICE_AGENT_URL = "wss://agent.deepgram.com/v1/agent/converse"
 
-# System prompt
+# --- UPDATED PROMPT: Added Rule to NOT read URLs ---
 VOICE_AGENT_PROMPT = """You are Jarvis, a professional assistant.
 
 YOUR CAPABILITIES:
@@ -59,6 +59,7 @@ RULES:
 - ALWAYS use 'check_availability' before booking.
 - Keep responses short and conversational (1-2 sentences).
 - Do NOT start talking about appointments unless the user mentions them.
+- NEVER read out HTTP links or URLs. Instead, say "I've sent the details to your email" or "Check your chat for the link".
 """
 
 def convert_webm_to_linear16(webm_bytes: bytes, target_sample_rate: int = 48000) -> Optional[bytes]:
@@ -148,7 +149,6 @@ class DeepgramVoiceAgent:
                 "speak": {
                     "provider": {"type": "deepgram", "model": "aura-2-thalia-en"}
                 },
-                # FIX: Generic Greeting
                 "greeting": "Hello! I'm Jarvis. How can I help you today?",
             },
         }
@@ -186,7 +186,7 @@ class DeepgramVoiceAgent:
         """Handle events from Deepgram."""
         msg_type = data.get("type")
         
-        # --- FIX: Check for 'FunctionCallRequest' ---
+        # --- Handle Function Calls ---
         if msg_type == "FunctionCallRequest":
             self._handle_function_call(data)
             return
@@ -242,9 +242,8 @@ class DeepgramVoiceAgent:
             # Send response back to Deepgram
             response_msg = {
                 "type": "FunctionCallResponse",
-                "id": call_id,     # ID link karna zaroori hai
-                "name": func_name,
-                "content": result  # Result yahan jayega
+                "function_call_id": call_id,
+                "output": result
             }
             self._send_json(response_msg)
 
