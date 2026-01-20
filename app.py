@@ -40,8 +40,8 @@ app = Flask(__name__)
 # Use environment variable for secret key (required for Heroku), fallback to random for local
 app.secret_key = os.getenv("FLASK_SECRET_KEY", os.urandom(24).hex())
 # Initialize SocketIO
-# Use 'eventlet' for production (Heroku), 'threading' for local development
-async_mode = 'eventlet' if IS_HEROKU else 'threading'
+# Use 'gevent' for production (Heroku - Python 3.12 compatible), 'threading' for local development
+async_mode = 'gevent' if IS_HEROKU else 'threading'
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
