@@ -37,8 +37,8 @@ IS_HEROKU = os.getenv("DYNO") is not None
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
-
+# Use environment variable for secret key (required for Heroku), fallback to random for local
+app.secret_key = os.getenv("FLASK_SECRET_KEY", os.urandom(24).hex())
 # Initialize SocketIO
 # Use 'eventlet' for production (Heroku), 'threading' for local development
 async_mode = 'eventlet' if IS_HEROKU else 'threading'
