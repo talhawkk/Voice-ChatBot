@@ -118,7 +118,7 @@ def conversation_history():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    """Handle text chat message."""
+    """Handle text chat message with auto language detection."""
     try:
         data = request.json
         # Support both 'text' and 'message' fields for compatibility
@@ -133,10 +133,15 @@ def chat():
             session_id = f"session_{uuid.uuid4().hex[:12]}"
             session['session_id'] = session_id
         
-        # Generate response
+        # Auto-detect language from user's text (supports English, Urdu, Hindi, Roman Urdu, Roman Hindi)
+        from utils.language import detect_text_language
+        detected_lang = detect_text_language(text)
+        print(f"[Chat] Detected language: {detected_lang} for text: '{text[:50]}...'")
+        
+        # Generate response in detected language
         from storage.redis_client import get_conversation_context, append_to_context
         context = get_conversation_context(session_id)
-        response_text = generate_response(text, context, "en")
+        response_text = generate_response(text, context, detected_lang)
         
         # Save to context
         append_to_context(session_id, {
@@ -164,6 +169,7 @@ def chat():
             'response': response_text,
             'jarvis': response_text,  # Frontend expects 'jarvis' field
             'text': response_text,    # Also include 'text' for compatibility
+            'language': detected_lang,  # Return detected language for frontend
             'message_id': str(uuid.uuid4())
         })
         
