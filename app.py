@@ -141,8 +141,8 @@ def chat():
         # Generate response in detected language
         from storage.redis_client import get_conversation_context, append_to_context
         context = get_conversation_context(session_id)
-        response_text = generate_response(text, context, detected_lang)
-        
+        # response_text = generate_response(text, context, detected_lang)
+        response_text = generate_response(text, context, detected_lang, session_id=session_id)
         # Save to context
         append_to_context(session_id, {
             'role': 'user',
@@ -214,8 +214,8 @@ def voice_message():
             # Generate response
             from storage.redis_client import get_conversation_context, append_to_context
             context = get_conversation_context(session_id)
-            response_text = generate_response(transcription, context, detected_lang)
-            
+            # response_text = generate_response(transcription, context, detected_lang)
+            response_text = generate_response(transcription, context, detected_lang, session_id=session_id)
             # Generate TTS audio
             audio_bytes = text_to_speech_bytes_sync(response_text, detected_lang)
             
@@ -315,8 +315,8 @@ def ai_response():
         # Generate response
         from storage.redis_client import get_conversation_context, append_to_context
         context = get_conversation_context(session_id)
-        response_text = generate_response(transcription, context, language)
-        
+        # response_text = generate_response(transcription, context, language)
+        response_text = generate_response(transcription, context, language, session_id=session_id)
         # Generate TTS audio
         audio_bytes = text_to_speech_bytes_sync(response_text, language)
         
@@ -394,8 +394,8 @@ def voice_call_chunk():
             # Generate response
             from storage.redis_client import get_conversation_context, append_to_context
             context = get_conversation_context(session_id)
-            response_text = generate_response(transcription, context, detected_lang)
-            
+            # response_text = generate_response(transcription, context, detected_lang)
+            response_text = generate_response(transcription, context, detected_lang, session_id=session_id)
             # Generate TTS audio
             audio_bytes = text_to_speech_bytes_sync(response_text, detected_lang)
             

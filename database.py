@@ -61,7 +61,20 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS appointments (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                session_id VARCHAR(255),
+                user_email VARCHAR(255) NOT NULL,
+                user_name VARCHAR(255),
+                start_time TIMESTAMP NOT NULL,
+                end_time TIMESTAMP NOT NULL,
+                meeting_type VARCHAR(50),
+                google_event_id VARCHAR(255),
+                status VARCHAR(50) DEFAULT 'confirmed',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
         # Alter table if message_id column is too small (fix for existing databases)
         try:
             cur.execute("""
