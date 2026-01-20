@@ -32,15 +32,20 @@ from storage import upload_to_s3, is_s3_configured
 # Configuration
 FLASK_DEBUG = os.getenv("FLASK_DEBUG", "True").lower() == "true"
 
+# Detect if running on Heroku (production)
+IS_HEROKU = os.getenv("DYNO") is not None
+
 # Initialize Flask app
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
 # Initialize SocketIO
+# Use 'eventlet' for production (Heroku), 'threading' for local development
+async_mode = 'eventlet' if IS_HEROKU else 'threading'
 socketio = SocketIO(
     app,
     cors_allowed_origins="*",
-    async_mode='threading',
+    async_mode=async_mode,
     logger=False,
     engineio_logger=False
 )
@@ -710,4 +715,6 @@ def handle_pcm_audio_chunk(data):
         print(f"[ERROR] PCM audio chunk error: {e}")
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=FLASK_DEBUG)
+    # Use PORT from environment (Heroku) or default to 5000 (local)
+    port = int(os.environ.get('PORT', 5000))
+    socketio.run(app, host='0.0.0.0', port=port, debug=FLASK_DEBUG)
