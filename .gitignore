@@ -28,3 +28,4 @@ credentials.json
 ffmpeg-8.0.1-essentials_build/
 /ffmpeg-8.0.1-essentials_build
 heroku_deployment.md
+token.json
