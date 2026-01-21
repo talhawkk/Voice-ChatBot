@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime
 import base64
 import tempfile
+import re
 
 # Import services
 from database import init_db, save_message, get_conversation_history, get_message_by_id
@@ -92,7 +93,12 @@ def initialize_services():
         print("✅ S3: Configured")
     else:
         print("⚠️  S3: Not configured (optional)")
-
+# --- HELPER: Remove Links for TTS ---
+def remove_links(text):
+    """Remove URLs from text to prevent TTS from reading them."""
+    if not text: return ""
+    # Regex to remove http/https links
+    return re.sub(r'http[s]?://\S+', '', text)
 # Initialize on startup
 initialize_services()
 
@@ -214,11 +220,13 @@ def voice_message():
             # Generate response
             from storage.redis_client import get_conversation_context, append_to_context
             context = get_conversation_context(session_id)
-            # response_text = generate_response(transcription, context, detected_lang)
-            response_text = generate_response(transcription, context, detected_lang, session_id=session_id)
-            # Generate TTS audio
-            audio_bytes = text_to_speech_bytes_sync(response_text, detected_lang)
-            
+
+            # response_text = generate_response(transcription, context, detected_lang, session_id=session_id)
+            # audio_bytes = text_to_speech_bytes_sync(response_text, detected_lang)
+            response_text = generate_response(transcription, context, detected_lang)
+            tts_text = remove_links(response_text)
+            audio_bytes = text_to_speech_bytes_sync(tts_text, detected_lang)
+
             # Save audio files
             message_id = str(uuid.uuid4())
             timestamp = datetime.now().strftime("%Y%m%d_%H-%M-%S")
@@ -315,10 +323,12 @@ def ai_response():
         # Generate response
         from storage.redis_client import get_conversation_context, append_to_context
         context = get_conversation_context(session_id)
-        # response_text = generate_response(transcription, context, language)
-        response_text = generate_response(transcription, context, language, session_id=session_id)
-        # Generate TTS audio
-        audio_bytes = text_to_speech_bytes_sync(response_text, language)
+
+        # response_text = generate_response(transcription, context, language, session_id=session_id)
+        # audio_bytes = text_to_speech_bytes_sync(response_text, language)
+        response_text = generate_response(transcription, context, language)
+        tts_text = remove_links(response_text)
+        audio_bytes = text_to_speech_bytes_sync(tts_text, language)
         
         # Save response audio
         message_id = str(uuid.uuid4())
@@ -394,11 +404,12 @@ def voice_call_chunk():
             # Generate response
             from storage.redis_client import get_conversation_context, append_to_context
             context = get_conversation_context(session_id)
-            # response_text = generate_response(transcription, context, detected_lang)
-            response_text = generate_response(transcription, context, detected_lang, session_id=session_id)
-            # Generate TTS audio
-            audio_bytes = text_to_speech_bytes_sync(response_text, detected_lang)
-            
+            # response_text = generate_response(transcription, context, detected_lang, session_id=session_id)
+            # audio_bytes = text_to_speech_bytes_sync(response_text, detected_lang)
+            response_text = generate_response(transcription, context, detected_lang)
+            tts_text = remove_links(response_text)
+            audio_bytes = text_to_speech_bytes_sync(tts_text, detected_lang)
+
             # Save response audio
             message_id = str(uuid.uuid4())
             timestamp = datetime.now().strftime("%Y%m%d_%H-%M-%S")

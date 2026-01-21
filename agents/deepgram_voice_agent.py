@@ -1,6 +1,7 @@
 """
 Deepgram Voice Agent - Full duplex voice conversation using Deepgram's Voice Agent API V1.
 Supports Function Calling for Local Calendar Booking.
+FIXED: V1 API Response Format (id, name, content).
 """
 import os
 import threading
@@ -47,7 +48,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 VOICE_AGENT_URL = "wss://agent.deepgram.com/v1/agent/converse"
 
-# --- UPDATED PROMPT: Added Rule to NOT read URLs ---
+# System Prompt
 VOICE_AGENT_PROMPT = """You are Jarvis, a professional assistant.
 
 YOUR CAPABILITIES:
@@ -186,7 +187,6 @@ class DeepgramVoiceAgent:
         """Handle events from Deepgram."""
         msg_type = data.get("type")
         
-        # --- Handle Function Calls ---
         if msg_type == "FunctionCallRequest":
             self._handle_function_call(data)
             return
@@ -216,7 +216,6 @@ class DeepgramVoiceAgent:
     def _handle_function_call(self, data: dict):
         """Execute the local tool and send result back to Deepgram."""
         
-        # FIX: Deepgram sends a LIST of functions
         functions = data.get("functions", [])
         
         for func in functions:
@@ -239,12 +238,15 @@ class DeepgramVoiceAgent:
 
             print(f"[Voice Agent] Tool Result: {result}")
 
-            # Send response back to Deepgram
+            # --- CRITICAL FIX FOR V1 API ---
             response_msg = {
                 "type": "FunctionCallResponse",
-                "function_call_id": call_id,
-                "output": result
+                "id": call_id,     # Correct Key for V1
+                "name": func_name, # Correct Key for V1
+                "content": result  # Correct Key for V1
             }
+            # -------------------------------
+            
             self._send_json(response_msg)
 
     def _keep_alive(self):
