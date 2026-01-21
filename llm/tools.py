@@ -48,14 +48,33 @@ def check_availability_tool(args_json):
     try:
         args = json.loads(args_json)
         dt = datetime.fromisoformat(args.get("date_time"))
-        is_free = calendar_service.is_slot_available(dt)
+        
+        # ✅ Default to 1 hour (60 minutes) instead of 30
+        duration_minutes = args.get("duration_minutes", 60)
+        
+        is_free = calendar_service.is_slot_available(dt, duration_minutes)
+        
+        # ✅ Handle None (error case)
+        if is_free is None:
+            return json.dumps({
+                "status": "error", 
+                "msg": "Could not check calendar availability. Please try again or contact support."
+            })
         
         if is_free:
-            return json.dumps({"status": "available", "msg": f"The slot at {dt} is free."})
+            return json.dumps({
+                "status": "available", 
+                "msg": f"The slot at {dt} for {duration_minutes} minutes is free."
+            })
         else:
-            return json.dumps({"status": "busy", "msg": f"Sorry, {dt} is taken."})
+            return json.dumps({
+                "status": "busy", 
+                "msg": f"Sorry, {dt} is already booked. Please choose another time."
+            })
     except Exception as e:
         print(f"[Tool Error] Availability Check: {e}")
+        import traceback
+        traceback.print_exc()
         return json.dumps({"status": "error", "msg": str(e)})
 
 def book_appointment_tool(args_json, session_id):
